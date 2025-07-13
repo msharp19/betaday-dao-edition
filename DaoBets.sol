@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "https://github.com/Uniswap/uniswap-v2-periphery/blob/master/contracts/interfaces/IUniswapV2Router02.sol";
 import "https://github.com/Uniswap/v2-core/blob/master/contracts/interfaces/IUniswapV2Factory.sol";
@@ -26,14 +25,12 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
 
     function initialize(
         address _uniswapRouterAddress,
-        address _priceFeedRouterAddress,
         uint256 _houseRakePercent,
         address _houseRakeReceiver,
         uint256 _resolverPercent
     ) public initializer {
         require(_houseRakeReceiver != address(0), "Invalid receiver");
         require(_uniswapRouterAddress != address(0), "Invalid Uniswap router address");
-        require(_priceFeedRouterAddress != address(0), "Invalid price feed router address");
         require(_houseRakePercent <= 1000, "House rake too high"); // Max 10%
         require(_resolverPercent <= 1000, "Resolver cut too high"); // Max 10%
 
@@ -47,7 +44,6 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         $.houseRakeReceiver = _houseRakeReceiver;
         $.resolverPercent = _resolverPercent;
         $.uniswapRouterAddress = _uniswapRouterAddress;
-        $.priceFeedRouterAddress = _priceFeedRouterAddress;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
@@ -164,7 +160,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         require(paymentAsset.isSupported, "Payment asset is not supported");
 
         // Transfer the asset to the contract & then convert to the payment asset in uniswap
-        convertedAmount = _convertAssets(
+        convertedAmount = (asset == proposal.payoutAddress) ? amount : _convertAssets(
             $.uniswapRouterAddress,
             asset,
             proposal.payoutAddress,
@@ -296,6 +292,33 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
        _appStorage().houseRakePercent = newRate;
     }
 
+    function getUniswapSwapOutput(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn
+    ) public view returns (uint256) 
+    {
+        AppStorage storage $ = _appStorage();
+        IUniswapV2Router02 uniswapRouter = IUniswapV2Router02($.uniswapRouterAddress);
+
+        address pair = IUniswapV2Factory(uniswapRouter.factory()).getPair(tokenIn, tokenOut);
+        require(pair != address(0), "No liquidity pool exists for pair provided");
+        
+        (uint112 reserve0, uint112 reserve1,) = IUniswapV2Pair(pair).getReserves();
+        require(reserve0 > 0 && reserve1 > 0, "Insufficient liquidity in pool");
+
+        (uint112 reserveIn, uint112 reserveOut) = IUniswapV2Pair(pair).token0() == tokenIn 
+            ? (reserve0, reserve1) 
+            : (reserve1, reserve0);
+        
+        // Calculate output with 0.3% fee accounted for by Uniswap
+        uint256 amountInWithFee = amountIn * 997;
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
+        
+        return numerator / denominator;
+    }
+
     function _payoutResolver(
         uint256 totalLoserBets, 
         uint256 percent,
@@ -342,13 +365,12 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         path[0] = assetFromAddress;
         path[1] = assetToAddress;
 
-        uint expectedOut = getExpectedOutput(
-            uniswapRouterAddress,
+        uint expectedOutValue = getUniswapSwapOutput(
             assetFromAddress, 
             assetToAddress, 
             amountIn
         );
-        uint minOut = (expectedOut * 98) / 100; // 2% slippage
+        uint minOut = (expectedOutValue * 98) / 100; // 2% slippage
 
         uint[] memory amounts = IUniswapV2Router02(uniswapRouterAddress).swapExactTokensForTokens(
             amountIn,
@@ -364,33 +386,6 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
     function _appStorage() private pure returns (AppStorage storage $) 
     {
         assembly { $.slot := AppStorageSlot }
-    }
-
-    function getExpectedOutput(
-        address uniswapRouterAddress,
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) internal view returns (uint256) 
-    {
-        IUniswapV2Router02 uniswapRouter = IUniswapV2Router02(uniswapRouterAddress);
-
-        address pair = IUniswapV2Factory(uniswapRouter.factory()).getPair(tokenIn, tokenOut);
-        require(pair != address(0), "No liquidity pool exists for pair provided");
-        
-        (uint112 reserve0, uint112 reserve1,) = IUniswapV2Pair(pair).getReserves();
-        require(reserve0 > 0 && reserve1 > 0, "Insufficient liquidity in pool");
-
-        (uint112 reserveIn, uint112 reserveOut) = IUniswapV2Pair(pair).token0() == tokenIn 
-            ? (reserve0, reserve1) 
-            : (reserve1, reserve0);
-        
-        // Calculate output with 0.3% fee accounted for by Uniswap
-        uint256 amountInWithFee = amountIn * 997;
-        uint256 numerator = amountInWithFee * reserveOut;
-        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
-        
-        return numerator / denominator;
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
