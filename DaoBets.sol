@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./IDaoBets.sol";
 import "./IDaoAdapter.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -81,7 +80,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
      */
     function addProposal(
         address daoAdapterAddress, 
-        bytes[] memory nativeProposalId
+        bytes memory nativeProposalId
     ) external nonReentrant returns(uint256 newProposalId) 
     {
         AppStorage storage $ = _appStorage();
@@ -118,7 +117,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         Proposal storage proposal = $.proposals[proposalId];
         IDaoAdapter daoAdapter = IDaoAdapter(proposal.daoAdapterAddress);
 
-        require(daoAdapter.proposalExists(proposalId), "Proposal doesn't exist");
+        require(daoAdapter.proposalIsRegistered(proposalId), "Proposal doesn't exist");
         require(proposal.daoOutcome == DaoOutcome.Unresolved, "Already resolved");
         require(block.timestamp >= daoAdapter.getProposalEndDate(proposalId), "Too early to resolve");
 
@@ -173,7 +172,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         SupportedPaymentAsset memory paymentAsset = getPaymentAsset(asset);
         IDaoAdapter daoAdapter = IDaoAdapter(proposal.daoAdapterAddress);
 
-        require(daoAdapter.proposalExists(proposalId), "Proposal doesn't exist");
+        require(daoAdapter.proposalIsRegistered(proposalId), "Proposal doesn't exist");
         require(block.timestamp < daoAdapter.getProposalEndDate(proposalId) - 24 hours, "Betting closed");
         require(amount > 0, "Invalid bet amount");
         require(proposal.daoOutcome == DaoOutcome.Unresolved, "Proposal already resolved");
@@ -211,7 +210,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         Proposal storage proposal = $.proposals[proposalId];
         IDaoAdapter daoAdapter = IDaoAdapter(proposal.daoAdapterAddress);
         
-        require(daoAdapter.proposalExists(proposalId), "Proposal doesn't exist");
+        require(daoAdapter.proposalIsRegistered(proposalId), "Proposal doesn't exist");
         require(proposal.daoOutcome != DaoOutcome.Unresolved, "Proposal not resolved yet");
         require(proposal.userBets[_msgSender()].succeedBets != 0 || proposal.userBets[_msgSender()].defeatBets != 0, "No bets placed");
         
@@ -278,7 +277,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         // Has to be storage access because it has nested mapping
         Proposal storage proposal = _appStorage().proposals[proposalId];
         IDaoAdapter daoAdapter = IDaoAdapter(proposal.daoAdapterAddress);
-        require(daoAdapter.proposalExists(proposalId), "Proposal doesn't exist");
+        require(daoAdapter.proposalIsRegistered(proposalId), "Proposal doesn't exist");
 
         return (
             proposal.id, 
@@ -302,7 +301,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         Proposal storage proposal = _appStorage().proposals[proposalId];
         IDaoAdapter daoAdapter = IDaoAdapter(proposal.daoAdapterAddress);
                 
-        require(daoAdapter.proposalExists(proposalId), "Proposal doesn't exist");
+        require(daoAdapter.proposalIsRegistered(proposalId), "Proposal doesn't exist");
 
         succeedBets = proposal.userBets[user].succeedBets;
         defeatBets = proposal.userBets[user].defeatBets;
