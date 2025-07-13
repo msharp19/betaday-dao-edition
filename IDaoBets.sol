@@ -8,14 +8,18 @@ pragma solidity ^0.8.0;
 interface IDaoBets 
 {   
     /**
-     * @dev Enum representing possible outcomes of a DAO proposal.
+     * @dev Enum representing possible outcomes of a DAO proposal
+     * @param Unresolved Proposal hasn't been resolved yet
+     * @param Cancelled Proposal was cancelled before execution
+     * @param Succeeded Proposal succeeded and will be/was executed
+     * @param Defeated Proposal was defeated in voting
      */
     enum DaoOutcome
     {
-       Unresolved,   // Proposal hasn't been resolved yet
-       Cancelled,    // Proposal was cancelled
-       Succeeded,    // Proposal succeeded
-       Defeated      // Proposal was defeated
+       Unresolved,
+       Cancelled,
+       Succeeded,
+       Defeated
     }
 
     /**
