@@ -446,7 +446,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
             minOut,
             path,
             address(this),
-            block.timestamp + 5 minutes // The dealine before this will fail is now plus 5 mins (protection)
+            block.timestamp + 5 minutes // The deadline before this will fail is now plus 5 mins (protection)
         );
 
         convertedAssetAmount = amounts[1];
