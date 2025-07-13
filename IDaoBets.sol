@@ -139,10 +139,10 @@ interface IDaoBets
     /**
      * @dev Creates a new betting proposal.
      * @param daoAdapterAddress Address of the DAO adapter.
-     * @param nativeProposalId Array of bytes representing the native proposal ID.
+     * @param nativeProposalId bytes representing the native proposal ID.
      * @return newProposalId ID of the newly created proposal.
      */
-    function addProposal(address daoAdapterAddress, bytes[] memory nativeProposalId) external returns(uint256 newProposalId);
+    function addProposal(address daoAdapterAddress, bytes memory nativeProposalId) external returns(uint256 newProposalId);
     
     /**
      * @dev Resolves a proposal and calculates payouts.
