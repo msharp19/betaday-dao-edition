@@ -83,5 +83,5 @@ interface IDaoAdapter
      * @param nativeProposalId The proposal ID in the native DAO format
      * @return bool True if the proposal exists, false otherwise
      */
-    function externalProposalExists(bytes memory nativeProposalId) external view returns (bool);
+    function externalActiveProposalExists(bytes memory nativeProposalId) external view returns (bool);
 }
