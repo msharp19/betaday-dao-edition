@@ -117,16 +117,21 @@ contract ENSDaoAdapter is IDaoAdapter, IENSDaoAdapter, Initializable, OwnableUpg
         return mappedProposal.exists;
     }
 
-    function externalProposalExists(bytes memory nativeProposalId) external view returns (bool)
+    function externalActiveProposalExists(bytes memory nativeProposalId) external view returns (bool)
     {
         AppStorage storage $ = _appStorage();
 
         uint256 daoProposalId = _bytesToUint256(nativeProposalId);
 
         // Reverts if there is no proposal registered ENS side for the provided ID
-        IGovernor($.daoAddress).state(daoProposalId);
+        IGovernor.ProposalState state = IGovernor($.daoAddress).state(daoProposalId);
 
-        return true;
+        if(state == IGovernor.ProposalState.Active || state == IGovernor.ProposalState.Pending)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     function _bytesToUint256(bytes memory data) internal pure returns (uint256) 
