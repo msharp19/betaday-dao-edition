@@ -428,7 +428,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
     ) internal returns(uint256 convertedAssetAmount) 
     {
         IERC20(assetFromAddress).transferFrom(_msgSender(), address(this), amountIn);
-        IERC20(assetFromAddress).approve(uniswapRouterAddress, amountIn);
+        IERC20(address(this)).approve(uniswapRouterAddress, amountIn);
         
         address[] memory path = new address[](2);
         path[0] = assetFromAddress;
