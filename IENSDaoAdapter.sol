@@ -11,6 +11,17 @@ pragma solidity ^0.8.0;
 interface IENSDaoAdapter
 {
     /**
+     * @dev Struct representing a an externally mapped proposal
+     * @param exists If the mapping exists.
+     * @param externalProposalId The externally mapped proposal ID.
+     */
+    struct ProposalMapping
+    {
+        bool exists;
+        uint256 externalProposalId;
+    }
+
+    /**
      * @dev Main storage struct for the contract.
      * @param nextProposalId ID for the next proposal to be created.
      * @param houseRakePercent House commission percentage in basis points (1% = 100).
@@ -26,7 +37,7 @@ interface IENSDaoAdapter
     {
         string daoName;
         address daoAddress;
-        mapping(uint256 => bytes[]) nativeProposalMappings;
+        mapping(uint256 => ProposalMapping) nativeProposalMappings;
 
         uint256[50] __gap;
     }
