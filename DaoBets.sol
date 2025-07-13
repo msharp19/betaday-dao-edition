@@ -89,7 +89,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         require(supportedDao.isSupported, "Dao adapter address is not currently supported.");
 
         IDaoAdapter daoAdapter = IDaoAdapter(daoAdapterAddress);
-        require(daoAdapter.externalProposalExists(nativeProposalId), "Proposal doesn't exist on Dao or is not active.");
+        require(daoAdapter.externalActiveProposalExists(nativeProposalId), "Proposal doesn't exist on Dao or is not active.");
 
         newProposalId = $.nextProposalId++;
 
