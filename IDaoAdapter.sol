@@ -26,8 +26,8 @@ interface IDaoAdapter
     }
 
     /**
-     * @dev ERC-165 interface support check
-     * @param interfaceId The interface identifier, as specified in ERC-165
+     * @dev IDaoAdapter interface support check
+     * @param interfaceId The interface identifier, as specified in IDaoAdapter
      * @return bool True if the contract implements `interfaceId` and
      * `interfaceId` is not 0xffffffff, false otherwise
      * @notice This function call must use less than 30,000 gas
@@ -53,7 +53,7 @@ interface IDaoAdapter
      * @return bool True if the proposal exists on the DAO side and was mapped successfully
      * @notice This function should verify the proposal exists on the DAO before mapping
      */
-    function mapProposal(bytes[] memory nativeProposalId, uint256 mappedProposalId) external returns (bool);
+    function mapProposal(bytes memory nativeProposalId, uint256 mappedProposalId) external returns (bool);
 
     /**
      * @dev Gets the current outcome of a proposal
@@ -72,16 +72,16 @@ interface IDaoAdapter
     function getProposalEndDate(uint256 proposalId) external view returns (uint256);
 
     /**
-     * @dev Checks if a proposal exists by its internal ID
-     * @param proposalId The internal mapped proposal ID
+     * @dev Checks if a proposal has been mapped already by its internal ID
+     * @param proposalId The external mapped proposal ID
      * @return bool True if the proposal exists, false otherwise
      */
-    function proposalExists(uint256 proposalId) external view returns (bool);
+    function proposalIsRegistered(uint256 proposalId) external view returns (bool);
 
     /**
-     * @dev Checks if a proposal exists by its native DAO ID
+     * @dev Checks if a proposal exists by its native DAO ID externally (on the Dao contract)
      * @param nativeProposalId The proposal ID in the native DAO format
      * @return bool True if the proposal exists, false otherwise
      */
-    function proposalExists(bytes[] memory nativeProposalId) external view returns (bool);
+    function externalProposalExists(bytes memory nativeProposalId) external view returns (bool);
 }
