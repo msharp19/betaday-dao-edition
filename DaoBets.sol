@@ -48,6 +48,9 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     */
     function addDao(
         address daoAdapterAddress, 
         address payoutTokenAddress
@@ -61,6 +64,9 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         $.supportedDaos[daoAdapterAddress] = SupportedDao(true, daoAdapterAddress, payoutTokenAddress);
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     */
     function addPaymentAsset(address assetAddress) public onlyOwner 
     {
         require(assetAddress != address(0), "Invalid asset token address");
@@ -69,6 +75,10 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         $.supportedPaymentAssets[assetAddress] = SupportedPaymentAsset(true, assetAddress);
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     * @dev Creates a new betting proposal after verifying the DAO proposal exists.
+     */
     function addProposal(
         address daoAdapterAddress, 
         bytes[] memory nativeProposalId
@@ -97,6 +107,11 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         return newProposalId;
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     * @dev Resolves a proposal and calculates payouts based on the outcome.
+     * @notice Can only be called after the proposal's voting period has ended.
+     */
     function resolveProposal(uint256 proposalId) external nonReentrant 
     {
         AppStorage storage $ = _appStorage();
@@ -141,6 +156,11 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         emit ProposalResolved(proposalId, _msgSender(), block.timestamp);
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     * @dev Places a bet on a proposal, converting assets if necessary.
+     * @notice Betting closes 24 hours before the proposal's end date.
+     */
     function placeBet(
         address asset,
         uint256 proposalId,
@@ -180,6 +200,11 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         emit BetPlaced(proposalId, _msgSender(), succeed, convertedAmount, block.timestamp);
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     * @dev Collects winnings for a resolved proposal.
+     * @return amount The amount of winnings collected.
+     */
     function collectWinnings(uint256 proposalId) external nonReentrant returns(uint256) 
     {
         AppStorage storage $ = _appStorage();
@@ -235,6 +260,9 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         return winnings;
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     */
     function getProposal(uint256 proposalId) external view returns(
         uint256 id,
         uint256 createdAt,
@@ -265,6 +293,9 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         );
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     */
     function getUsersProposalBet(uint256 proposalId, address user) external view returns(uint256 succeedBets, uint256 defeatBets)
     {
         // Has to be storage access because it has nested mapping
@@ -277,21 +308,35 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         defeatBets = proposal.userBets[user].defeatBets;
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     */
     function getDao(address daoAdapterAddress) public view returns(SupportedDao memory supportedDao) 
     {
         supportedDao = _appStorage().supportedDaos[daoAdapterAddress];
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     */
     function getPaymentAsset(address paymentAssetAddress) public view returns(SupportedPaymentAsset memory supportedPaymentAsset) 
     {
         supportedPaymentAsset = _appStorage().supportedPaymentAssets[paymentAssetAddress];
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     */
     function setHouseRakePercent(uint256 newRate) external onlyOwner 
     {
        _appStorage().houseRakePercent = newRate;
     }
 
+    /**
+     * @inheritdoc IDaoBets
+     * @dev Calculates the expected output from a Uniswap swap.
+     * @notice Reverts if no liquidity pool exists for the token pair.
+     */
     function getUniswapSwapOutput(
         address tokenIn,
         address tokenOut,
@@ -319,6 +364,13 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         return numerator / denominator;
     }
 
+    /**
+     * @dev Internal function to payout resolver commission.
+     * @param totalLoserBets Total amount of losing bets.
+     * @param percent Commission percentage in basis points.
+     * @param tokenAddress Token address for payout.
+     * @return payout The amount paid to the resolver.
+     */
     function _payoutResolver(
         uint256 totalLoserBets, 
         uint256 percent,
@@ -333,6 +385,16 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         return payout;
     }
 
+    /**
+     * @dev Internal function to payout house commission.
+     * @param totalWinnerBets Total amount of winning bets.
+     * @param totalLoserBets Total amount of losing bets.
+     * @param resolverAmount Amount already paid to resolver.
+     * @param receiver Address to receive house commission.
+     * @param percent Commission percentage in basis points.
+     * @param tokenAddress Token address for payout.
+     * @return payout The amount paid to the house.
+     */
     function _payoutHouse(
         uint256 totalWinnerBets, 
         uint256 totalLoserBets, 
@@ -351,6 +413,14 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         return payout;
     }
 
+    /**
+     * @dev Internal function to convert assets via Uniswap.
+     * @param uniswapRouterAddress Address of Uniswap router.
+     * @param assetFromAddress Token to swap from.
+     * @param assetToAddress Token to swap to.
+     * @param amountIn Amount to swap.
+     * @return convertedAssetAmount Amount received after swap.
+     */
     function _convertAssets(
         address uniswapRouterAddress, 
         address assetFromAddress, 
@@ -383,10 +453,18 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         convertedAssetAmount = amounts[1];
     }
 
+    /**
+     * @dev Diamond storage pattern accessor.
+     * @return $ Reference to the AppStorage struct.
+     */
     function _appStorage() private pure returns (AppStorage storage $) 
     {
         assembly { $.slot := AppStorageSlot }
     }
 
+    /**
+     * @dev UUPS upgrade authorization hook.
+     * @notice Only owner can authorize upgrades.
+     */
     function _authorizeUpgrade(address) internal override onlyOwner {}
 }
