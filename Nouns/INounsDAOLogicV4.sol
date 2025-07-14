@@ -5,8 +5,10 @@ import { NounsDAOTypes } from "https://raw.githubusercontent.com/nounsDAO/nouns-
 
 /**
  * @title INounsDAOLogicV4 Interface
- * @notice Standard interface for INounsDAOLogicV4 contracts that provide a unified interface
- *         to interact with different Nouns DAO governance systems
+ * @notice Derived from NounsDAO with GPL-3.0 License
+ * @dev This interface is adapted from NounsDAO's governance contracts
+ *      Original source: https://github.com/nounsDAO/nouns-monorepo/blob/master/packages/nouns-contracts/contracts/governance/NounsDAOLogicV4.sol
+ *      NounsDAO License: License-Identifier: GPL-3.0
  */
 interface INounsDAOLogicV4
 {
