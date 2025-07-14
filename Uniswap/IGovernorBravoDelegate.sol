@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title GovernorBravoDelegate
- * @notice Standard interface for GovernorBravoDelegate contract
- *         to interact with different Governor Bravo DAO governance systems
+ * @title GovernorBravoDelegate Interface
+ * @notice Derived from Compound's Governor Bravo with MIT License
+ * @dev This interface is adapted from Compound's GovernorBravoDelegate 
+ *      Original source: https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/GovernorBravoDelegate.sol
+ *      Compound License: SPDX-License-Identifier: BSD-3-Clause
  */
 interface IGovernorBravoDelegate
 {
