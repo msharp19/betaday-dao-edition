@@ -98,7 +98,9 @@ contract NounsDaoAdapter is IDaoAdapter, INounsDaoAdapter, Initializable, Ownabl
 
         NounsDAOTypes.ProposalState state = INounsDAOLogicV4($.daoAddress).state(mappedProposal.externalProposalId);
 
-        if(state == NounsDAOTypes.ProposalState.Active || state == NounsDAOTypes.ProposalState.Pending) 
+        if(state == NounsDAOTypes.ProposalState.Active || 
+            state == NounsDAOTypes.ProposalState.Pending || 
+            state == NounsDAOTypes.ProposalState.ObjectionPeriod) 
         {
             return DaoOutcome.Unresolved;
         }
@@ -110,16 +112,19 @@ contract NounsDaoAdapter is IDaoAdapter, INounsDaoAdapter, Initializable, Ownabl
            return DaoOutcome.Succeeded;
         }
 
-        if(state == NounsDAOTypes.ProposalState.Defeated) 
+        if(state == NounsDAOTypes.ProposalState.Defeated ||
+           state == NounsDAOTypes.ProposalState.Expired) 
         {
            return DaoOutcome.Defeated;
         }
 
-        if(state == NounsDAOTypes.ProposalState.Canceled) 
+        if(state == NounsDAOTypes.ProposalState.Canceled ||
+           state == NounsDAOTypes.ProposalState.Vetoed) 
         {
            return DaoOutcome.Cancelled;
         }
 
+        // The status 'Updatable' means voting has not started yet so proposal cannot be created - revert
         revert("Proposal outcome could not be mapped.");
     }
 
@@ -169,7 +174,9 @@ contract NounsDaoAdapter is IDaoAdapter, INounsDaoAdapter, Initializable, Ownabl
         // Reverts if there is no proposal registered Nouns side for the provided ID
         NounsDAOTypes.ProposalState state = INounsDAOLogicV4($.daoAddress).state(daoProposalId);
 
-        if(state == NounsDAOTypes.ProposalState.Active || state == NounsDAOTypes.ProposalState.Pending)
+        if(state == NounsDAOTypes.ProposalState.Active || 
+            state == NounsDAOTypes.ProposalState.Pending || 
+            state == NounsDAOTypes.ProposalState.ObjectionPeriod)
         {
             return true;
         }
