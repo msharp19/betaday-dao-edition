@@ -15,7 +15,7 @@ import "https://github.com/Uniswap/v2-core/blob/master/contracts/interfaces/IUni
 
 contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, AccessControlUpgradeable, UUPSUpgradeable 
 {   
-    bytes32 private constant AppStorageSlot = keccak256("betaday.daobets.2025");
+    bytes32 private constant AppStorageSlot = 0x13c87d6460611943c091ab2be6aa0b7b528392dfe308260572dded42cbdb0b73;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
