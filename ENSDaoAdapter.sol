@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/governance/IGovernor.sol";
 
 contract ENSDaoAdapter is IDaoAdapter, IENSDaoAdapter, Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, AccessControlUpgradeable, UUPSUpgradeable 
 {   
-    bytes32 private constant AppStorageSlot = keccak256("betaday.daobets.ensdaoadapter.2025");
+    bytes32 private constant AppStorageSlot = 0x6472301cf87d8ab18c1c1936ba5f42c31924c9ff43985065fd1cca087b1fc578;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
