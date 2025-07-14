@@ -90,7 +90,7 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
 
         IDaoAdapter daoAdapter = IDaoAdapter(daoAdapterAddress);
         require(daoAdapter.externalActiveProposalExists(nativeProposalId), "Proposal doesn't exist on Dao or is not active.");
-
+        
         newProposalId = $.nextProposalId++;
 
         Proposal storage proposal = $.proposals[newProposalId];
@@ -177,6 +177,9 @@ contract DaoBets is IDaoBets, Initializable, OwnableUpgradeable, ReentrancyGuard
         require(amount > 0, "Invalid bet amount");
         require(proposal.daoOutcome == DaoOutcome.Unresolved, "Proposal already resolved");
         require(paymentAsset.isSupported, "Payment asset is not supported");
+
+        DaoOutcome outcome = DaoOutcome(uint(daoAdapter.getOutcomeOfProposal(proposalId)));
+        require(outcome == DaoOutcome.Unresolved, "Proposal is waiting to be resolved");
 
         // Transfer the asset to the contract & then convert to the payment asset in uniswap
         convertedAmount = (asset == proposal.payoutAddress) ? amount : _convertAssets(
